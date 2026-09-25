@@ -40,6 +40,8 @@ import Card from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
 import { useTelemetry } from '@/context/TelemetryContext';
 import { useRole } from '@/context/RoleContext';
+import NoJacketState from '@/components/ui/NoJacketState';
+import { MY_WORKER_ID } from '@/lib/mine-levels';
 import SubterraneanWorkerMap from '@/components/dashboard/SubterraneanWorkerMap';
 
 interface ExtendedWorkerRecord {
@@ -62,6 +64,16 @@ interface ExtendedWorkerRecord {
   registeredDate: string;
 }
 
+// Sample records that earlier versions saved to localStorage (id -> name), removed on load
+const REMOVED_SAMPLE_WORKERS: Record<string, string> = {
+  'WKR-101': 'Rajesh Kumar',
+  'WKR-102': 'Amit Sharma',
+  'WKR-103': 'Suresh Patel',
+  'WKR-104': 'Vikram Singh',
+  'WKR-105': 'Deepak Verma',
+  'WKR-106': 'Manoj Tiwari',
+};
+
 export default function WorkersPage() {
   const { workers: liveWorkers, alerts, simulateJacketPacket, acknowledgeAlert } = useTelemetry();
   const { role } = useRole();
@@ -74,7 +86,7 @@ export default function WorkersPage() {
 
   const selectedWorker = liveWorkers.find(
     (w) => w.id === selectedWorkerId || w.name.toLowerCase() === selectedWorkerId?.toLowerCase()
-  ) || (selectedWorkerId ? liveWorkers[0] : null);
+  ) || (selectedWorkerId ? liveWorkers[0] ?? null : null);
 
   const selectedDbRecord = dbWorkers.find(
     (d) => d.id === selectedWorker?.id || d.name.toLowerCase() === selectedWorker?.name.toLowerCase()
@@ -104,135 +116,18 @@ export default function WorkersPage() {
   // Load from LocalStorage DB on mount
   useEffect(() => {
     const savedDB = localStorage.getItem('mineguard_workers_db');
-    if (savedDB) {
-      try {
-        setDbWorkers(JSON.parse(savedDB));
-        return;
-      } catch (e) {
-        console.error('Failed to parse workers DB', e);
+    if (!savedDB) return;
+    try {
+      const saved: ExtendedWorkerRecord[] = JSON.parse(savedDB);
+      // Older versions seeded six sample workers into this list; drop them but keep real entries
+      const cleaned = saved.filter((w) => REMOVED_SAMPLE_WORKERS[w.id] !== w.name);
+      setDbWorkers(cleaned);
+      if (cleaned.length !== saved.length) {
+        localStorage.setItem('mineguard_workers_db', JSON.stringify(cleaned));
       }
+    } catch (e) {
+      console.error('Failed to parse workers DB', e);
     }
-
-    // Default seed database matching telemetry workers
-    const seedRecords: ExtendedWorkerRecord[] = [
-      {
-        id: 'WKR-101',
-        name: 'Rajesh Kumar',
-        jacketId: 'SJ-001',
-        role: 'Senior Excavation Operator',
-        zone: 'Deep Incline Shaft 4',
-        status: 'online',
-        heartRate: 74,
-        h2s: 3.2,
-        temperature: 24.5,
-        humidity: 62,
-        battery: 94,
-        bloodGroup: 'B+',
-        phone: '+91 98765 11001',
-        shift: 'Morning Shift A',
-        medicalConditions: 'None (Passed Annual Fitness)',
-        emergencyContact: '+91 98765 99001',
-        registeredDate: '2025-01-15',
-      },
-      {
-        id: 'WKR-102',
-        name: 'Amit Sharma',
-        jacketId: 'SJ-002',
-        role: 'Roof Bolting & Shoring Technician',
-        zone: 'Shaft 2 Tunnel Junction',
-        status: 'warning',
-        heartRate: 88,
-        h2s: 14.5,
-        temperature: 27.1,
-        humidity: 68,
-        battery: 81,
-        bloodGroup: 'O+',
-        phone: '+91 98765 11002',
-        shift: 'Morning Shift A',
-        medicalConditions: 'Mild Asthma (Inhaler Assigned)',
-        emergencyContact: '+91 98765 99002',
-        registeredDate: '2025-02-01',
-      },
-      {
-        id: 'WKR-103',
-        name: 'Suresh Patel',
-        jacketId: 'SJ-004',
-        role: 'Methane Ventilation Technician',
-        zone: 'Shaft 3 Extraction Chamber',
-        status: 'online',
-        heartRate: 71,
-        h2s: 2.1,
-        temperature: 23.8,
-        humidity: 60,
-        battery: 98,
-        bloodGroup: 'A+',
-        phone: '+91 98765 11003',
-        shift: 'Afternoon Shift B',
-        medicalConditions: 'None',
-        emergencyContact: '+91 98765 99003',
-        registeredDate: '2025-02-10',
-      },
-      {
-        id: 'WKR-104',
-        name: 'Vikram Singh',
-        jacketId: 'SJ-005',
-        role: 'Heavy Machinery & Loader Specialist',
-        zone: 'North Mine Drift Sector 1',
-        status: 'online',
-        heartRate: 76,
-        h2s: 4.8,
-        temperature: 25.2,
-        humidity: 64,
-        battery: 89,
-        bloodGroup: 'AB+',
-        phone: '+91 98765 11004',
-        shift: 'Morning Shift A',
-        medicalConditions: 'None',
-        emergencyContact: '+91 98765 99004',
-        registeredDate: '2025-02-20',
-      },
-      {
-        id: 'WKR-105',
-        name: 'Deepak Verma',
-        jacketId: 'SJ-006',
-        role: 'Subterranean Electrical & Lighting Engineer',
-        zone: 'Substation Level 3',
-        status: 'online',
-        heartRate: 69,
-        h2s: 1.5,
-        temperature: 22.9,
-        humidity: 58,
-        battery: 92,
-        bloodGroup: 'O-',
-        phone: '+91 98765 11005',
-        shift: 'Night Shift C',
-        medicalConditions: 'Controlled Blood Pressure',
-        emergencyContact: '+91 98765 99005',
-        registeredDate: '2025-03-01',
-      },
-      {
-        id: 'WKR-106',
-        name: 'Manoj Tiwari',
-        jacketId: 'SJ-008',
-        role: 'Conveyor System Maintenance Specialist',
-        zone: 'Shaft 4 Main Incline',
-        status: 'online',
-        heartRate: 75,
-        h2s: 3.0,
-        temperature: 24.1,
-        humidity: 61,
-        battery: 87,
-        bloodGroup: 'B-',
-        phone: '+91 98765 11006',
-        shift: 'Afternoon Shift B',
-        medicalConditions: 'None',
-        emergencyContact: '+91 98765 99006',
-        registeredDate: '2025-03-05',
-      },
-    ];
-
-    setDbWorkers(seedRecords);
-    localStorage.setItem('mineguard_workers_db', JSON.stringify(seedRecords));
   }, []);
 
   // Save to LocalStorage whenever DB state updates
@@ -338,7 +233,15 @@ export default function WorkersPage() {
   });
 
   if (role === 'Worker') {
-    const myWorker = liveWorkers.find((w) => w.id === 'W1026' || w.jacketId === 'SJ-003') || liveWorkers[0];
+    const myWorker = liveWorkers.find((w) => w.id === MY_WORKER_ID);
+    if (!myWorker) {
+      return (
+        <div className="space-y-6 pb-12">
+          <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">Sensor Data</h1>
+          <NoJacketState />
+        </div>
+      );
+    }
     const myAlerts = alerts.filter(
       (a) => a.workerId === myWorker.id || a.workerName === myWorker.name || a.zone === myWorker.zone
     );

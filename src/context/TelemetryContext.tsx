@@ -1,9 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { WorkerTelemetry, HardwareSensor, SafetyAlert } from '@/types/telemetry';
 import { initialWorkers, initialSensors, initialAlerts } from '@/lib/mock-data';
-import { subscribeToTelemetry } from '@/lib/data-source';
+import { LIVE_JACKET_WORKER_ID } from '@/lib/mine-levels';
 import { useRole } from '@/context/RoleContext';
 
 interface TelemetryStats {
@@ -49,7 +49,7 @@ const TelemetryContext = createContext<TelemetryContextType | undefined>(undefin
 export function TelemetryProvider({ children }: { children: ReactNode }) {
   const { role } = useRole();
   const [allWorkers, setAllWorkers] = useState<WorkerTelemetry[]>(initialWorkers);
-  const [sensors, setSensors] = useState<HardwareSensor[]>(initialSensors);
+  const [sensors] = useState<HardwareSensor[]>(initialSensors);
   const [alerts, setAlerts] = useState<SafetyAlert[]>(initialAlerts);
   const [isLive, setIsLive] = useState(true);
 
@@ -89,11 +89,11 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
 
     setAllWorkers((prevWorkers) => {
       const existingIdx = prevWorkers.findIndex(
-        (w) => w.jacketId === jacketId || w.id === 'W-ESP32-LIVE'
+        (w) => w.jacketId === jacketId || w.id === LIVE_JACKET_WORKER_ID
       );
 
       const liveWorker: WorkerTelemetry = {
-        id: 'W-ESP32-LIVE',
+        id: LIVE_JACKET_WORKER_ID,
         name: workerName,
         jacketId: jacketId,
         role: 'ESP32 Live Wearer',
@@ -133,7 +133,7 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
           id: `ALT-ESP32-${Date.now()}`,
           title: sos ? '🚨 ESP32 HARDWARE SOS PANIC BUTTON TRIGGERED!' : 'Critical Hazardous Conditions (ESP32)',
           workerName: workerName,
-          workerId: 'W-ESP32-LIVE',
+          workerId: LIVE_JACKET_WORKER_ID,
           jacketId: jacketId,
           zone: 'Shaft 3 - Live ESP32',
           severity: 'critical',
@@ -279,56 +279,12 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
     ingestJacketData(mockPacket, JSON.stringify(mockPacket));
   };
 
-  // 3-second simulation ticker for mock fleet
-  useEffect(() => {
-    if (!isLive) return;
-
-    const unsubscribe = subscribeToTelemetry((updatedWorkers) => {
-      setAllWorkers((prev) => {
-        // preserve live ESP32 worker if connected or simulated
-        const liveWorker = prev.find((w) => w.id === 'W-ESP32-LIVE');
-        if (liveWorker) {
-          return [liveWorker, ...updatedWorkers.filter((w) => w.id !== 'W-ESP32-LIVE')];
-        }
-        return updatedWorkers;
-      });
-
-      // Also gently update sensor values corresponding to fleet state
-      setSensors((prevSensors) => {
-        const h2sWorker = updatedWorkers.find((w) => w.jacketId === 'SJ-005') || updatedWorkers[0];
-        const avgHR = Math.round(
-          updatedWorkers.reduce((acc, w) => acc + w.heartRate, 0) / updatedWorkers.length
-        );
-
-        return prevSensors.map((sensor) => {
-          if (sensor.id === 'SENS-H2S-E') {
-            return {
-              ...sensor,
-              value: h2sWorker.h2s,
-              status: h2sWorker.h2s > 10 ? 'critical' : h2sWorker.h2s >= 5 ? 'warning' : 'safe',
-            };
-          }
-          if (sensor.id === 'SENS-PPG') {
-            return {
-              ...sensor,
-              value: avgHR,
-            };
-          }
-          return sensor;
-        });
-      });
-    }, 3000);
-
-    return () => unsubscribe();
-  }, [isLive]);
-
-  // Scope workers according to user role
+  // Scope workers according to user role: a Worker sees only their own live jacket
+  // (an empty list until the jacket connects)
   const workers = useMemo(() => {
     if (role === 'Worker') {
-      const myWorker = allWorkers.find(
-        (w) => w.name.includes('Vikram') || w.jacketId === 'SJ-003' || w.id === 'W1026' || w.id === 'W-ESP32-LIVE'
-      );
-      return myWorker ? [myWorker] : [allWorkers[0]];
+      const myWorker = allWorkers.find((w) => w.id === LIVE_JACKET_WORKER_ID);
+      return myWorker ? [myWorker] : [];
     }
     return allWorkers;
   }, [role, allWorkers]);
@@ -377,6 +333,7 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
   const getWorker = (id: string) => {
     if (role === 'Worker') {
       const myWorker = workers[0];
+      if (!myWorker) return undefined;
       if (
         id.toLowerCase() === myWorker.id.toLowerCase() ||
         id.toLowerCase() === myWorker.jacketId.toLowerCase()

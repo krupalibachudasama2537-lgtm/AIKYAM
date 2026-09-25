@@ -26,6 +26,8 @@ import SectionHeader from '@/components/ui/SectionHeader';
 import Avatar from '@/components/ui/Avatar';
 import { useTelemetry } from '@/context/TelemetryContext';
 import { useRole } from '@/context/RoleContext';
+import NoJacketState from '@/components/ui/NoJacketState';
+import { MY_WORKER_ID } from '@/lib/mine-levels';
 
 export default function AllDayAnalysisPage() {
   const { workers, stats, isLive } = useTelemetry();
@@ -33,7 +35,7 @@ export default function AllDayAnalysisPage() {
   const [selectedShift, setSelectedShift] = useState<'morning' | 'afternoon' | 'full'>('full');
 
   // Single worker telemetry for Worker Role (Underground Worker)
-  const myWorker = workers.find((w) => w.id === 'W1026' || w.jacketId === 'SJ-003') || workers[0];
+  const myWorker = workers.find((w) => w.id === MY_WORKER_ID);
 
   return (
     <div className="space-y-8 pb-12">
@@ -55,6 +57,9 @@ export default function AllDayAnalysisPage() {
 
       {/* WORKER ROLE: Individual Worker All-Day Detailed Analysis */}
       {role === 'Worker' ? (
+        !myWorker ? (
+          <NoJacketState />
+        ) : (
         <div className="space-y-6">
           {/* Individual Shift Metric Summaries */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -243,6 +248,7 @@ export default function AllDayAnalysisPage() {
             </div>
           </div>
         </div>
+      )
       ) : (
         /* SUPERVISOR / RESCUER ROLE: Mine-Wide All Workers Shift Analysis */
         <div className="space-y-6">
@@ -254,6 +260,9 @@ export default function AllDayAnalysisPage() {
           />
 
           {/* All Workers Grid Roster */}
+          {workers.length === 0 && (
+            <NoJacketState title="No workers online" message="Workers appear here as soon as their smart jackets connect." />
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {workers.map((worker) => (
               <Card key={worker.id} variant="interactive" padding="md" className="bg-white border-[#EDE4D6] shadow-xs flex flex-col justify-between">

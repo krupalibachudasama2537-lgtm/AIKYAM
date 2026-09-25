@@ -39,6 +39,8 @@ import Card from '@/components/ui/Card';
 import HazardAnalytics from '@/components/dashboard/HazardAnalytics';
 import { useTelemetry } from '@/context/TelemetryContext';
 import { useRole } from '@/context/RoleContext';
+import NoJacketState from '@/components/ui/NoJacketState';
+import { MY_WORKER_ID } from '@/lib/mine-levels';
 
 export default function HomePage() {
   const { workers, alerts, stats, isLive, toggleLive, acknowledgeAlert } = useTelemetry();
@@ -53,15 +55,18 @@ export default function HomePage() {
   };
 
   // Find max H2S reading currently active
-  const maxH2S = Math.max(...workers.map((w) => w.h2s));
+  const maxH2S = Math.max(...workers.map((w) => w.h2s), 0);
   const activeSOSCount = workers.filter((w) => w.sosActive).length;
 
-  const myWorker = workers.find((w) => w.id === 'W1026' || w.jacketId === 'SJ-003') || workers[0];
+  const myWorker = workers.find((w) => w.id === MY_WORKER_ID);
 
   return (
     <div className="space-y-8">
       {/* If Worker role, display logged-in worker's personal telemetry & 24h shift analysis */}
       {role === 'Worker' ? (
+        !myWorker ? (
+          <NoJacketState />
+        ) : (
         <div className="space-y-6">
           {/* Personal Smart Jacket Telemetry Sensors Grid */}
           <div className="bg-white rounded-3xl p-6 border border-[#EDE4D6] shadow-sm space-y-6">
@@ -237,6 +242,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      )
       ) : (
         <div className="space-y-6">
           <HazardAnalytics />
@@ -260,6 +266,9 @@ export default function HomePage() {
             </div>
 
             {/* All Workers Telemetry & Shift Status Cards */}
+            {workers.length === 0 && (
+              <NoJacketState title="No workers online" message="Workers appear here as soon as their smart jackets connect." />
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {workers.map((worker) => (
                 <div key={worker.id} className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#EDE4D6] flex flex-col justify-between space-y-3">
@@ -325,7 +334,7 @@ export default function HomePage() {
             <PastelTile
               title="Harmful Gas"
               subtitle="H2S Sensor"
-              metric={maxH2S.toFixed(1)}
+              metric={workers.length ? maxH2S.toFixed(1) : "—"}
               unit="ppm max"
               color="blue"
               href="/sensors?tab=gas"
@@ -337,7 +346,7 @@ export default function HomePage() {
             <PastelTile
               title="Heart Rate"
               subtitle="Pulse Sensor"
-              metric={`${stats.avgHeartRate}`}
+              metric={workers.length ? `${stats.avgHeartRate}` : "—"}
               unit="bpm avg"
               color="peach"
               href="/sensors?tab=vitals"

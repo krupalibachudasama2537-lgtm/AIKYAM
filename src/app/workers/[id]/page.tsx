@@ -341,8 +341,8 @@ export default function WorkerDetailPage({ params }: PageProps) {
 
           <div className="mt-3 flex items-center justify-between text-xs text-[#64748B] pt-2 border-t border-[#EDE4D6]">
             <span>Average: {worker.heartRate} bpm</span>
-            <span>Peak: {Math.max(...chartData.map((d) => d.heartRate))} bpm</span>
-            <span>Min: {Math.min(...chartData.map((d) => d.heartRate))} bpm</span>
+            <span>Peak: {chartData.length ? Math.max(...chartData.map((d) => d.heartRate)) : worker.heartRate} bpm</span>
+            <span>Min: {chartData.length ? Math.min(...chartData.map((d) => d.heartRate)) : worker.heartRate} bpm</span>
           </div>
         </Card>
       </div>
