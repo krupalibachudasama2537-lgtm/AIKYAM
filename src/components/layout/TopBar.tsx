@@ -32,9 +32,7 @@ interface TopBarProps {
 export function TopBar({ onOpenMobile }: TopBarProps) {
   const pathname = usePathname();
   const { role, openLoginModal, logout, isLoggedIn } = useRole();
-  const { alerts, stats, physicalJacket, simulateJacketPacket, allWorkers } = useTelemetry();
-  // Worker shown in the SOS popup: whoever pressed SOS or is critical, from live jacket data
-  const sosWorker = allWorkers.find((w) => w.sosActive) ?? allWorkers.find((w) => w.status === "critical") ?? null;
+  const { alerts, stats, physicalJacket, simulateJacketPacket } = useTelemetry();
   const [searchValue, setSearchValue] = useState('');
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [alertModalOpen, setAlertModalOpen] = useState(false);
@@ -351,8 +349,8 @@ export function TopBar({ onOpenMobile }: TopBarProps) {
                   </div>
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Assigned Worker</span>
-                    <span className="text-sm sm:text-base font-black text-slate-900 block">{sosWorker ? sosWorker.name : "Control room broadcast"}</span>
-                    <span className="text-[10px] font-mono font-bold text-red-600">{sosWorker ? `ID: ${sosWorker.id} • Smart Jacket ${sosWorker.jacketId}` : "No jacket has reported SOS"}</span>
+                    <span className="text-sm sm:text-base font-black text-slate-900 block">Manoj Yadav</span>
+                    <span className="text-[10px] font-mono font-bold text-red-600">ID: W1028 • Smart Jacket SJ-004</span>
                   </div>
                 </div>
               </div>
@@ -365,8 +363,8 @@ export function TopBar({ onOpenMobile }: TopBarProps) {
                   </div>
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Underground Sector</span>
-                    <span className="text-sm sm:text-base font-black text-slate-900 block">{sosWorker ? sosWorker.zone : "Location unknown"}</span>
-                    <span className="text-[10px] font-semibold text-slate-500">{sosWorker ? `UWB: ${sosWorker.uwbX}m, ${sosWorker.uwbY}m` : "Waiting for jacket position"}</span>
+                    <span className="text-sm sm:text-base font-black text-slate-900 block">Level 4 - Sump & Drainage</span>
+                    <span className="text-[10px] font-semibold text-slate-500">Depth: -320m • Incline Shaft B</span>
                   </div>
                 </div>
               </div>
@@ -379,7 +377,7 @@ export function TopBar({ onOpenMobile }: TopBarProps) {
                   </div>
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-red-800 block">Toxic Gas Hazard</span>
-                    <span className="text-base sm:text-lg font-black text-red-700 font-mono block">{sosWorker ? `${sosWorker.h2s.toFixed(1)} ppm H₂S` : "No reading"}</span>
+                    <span className="text-base sm:text-lg font-black text-red-700 font-mono block">11.8 ppm H₂S</span>
                     <span className="text-[10px] font-bold text-red-600 uppercase">Immediate Evacuation Alert</span>
                   </div>
                 </div>
@@ -393,8 +391,8 @@ export function TopBar({ onOpenMobile }: TopBarProps) {
                   </div>
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Live Vital Telemetry</span>
-                    <span className="text-sm sm:text-base font-black text-slate-900 block">{sosWorker ? `Pulse: ${sosWorker.heartRate} bpm • ${sosWorker.temperature}°C` : "No reading"}</span>
-                    <span className="text-[10px] font-semibold text-emerald-600">{sosWorker ? `Battery: ${sosWorker.battery}% • Last ping ${sosWorker.lastPing}` : "No jacket connected"}</span>
+                    <span className="text-sm sm:text-base font-black text-slate-900 block">Pulse: 104 bpm • 34.8°C</span>
+                    <span className="text-[10px] font-semibold text-emerald-600">Battery: 88% • Network Online</span>
                   </div>
                 </div>
               </div>

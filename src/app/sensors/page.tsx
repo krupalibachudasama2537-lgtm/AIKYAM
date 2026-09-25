@@ -45,11 +45,11 @@ function SensorsContent() {
   }, [tabParam]);
 
   // Compute live values from telemetry
-  const maxH2S = Math.max(...workers.map((w) => w.h2s), 0);
+  const maxH2S = Math.max(...workers.map((w) => w.h2s));
   const avgHR = Math.round(workers.reduce((a, b) => a + b.heartRate, 0) / (workers.length || 1));
   const avgTemp = Number((workers.reduce((a, b) => a + b.temperature, 0) / (workers.length || 1)).toFixed(1));
   const avgHum = Math.round(workers.reduce((a, b) => a + b.humidity, 0) / (workers.length || 1));
-  const maxPM = Math.max(...workers.map((w) => w.pm25), 0);
+  const maxPM = Math.max(...workers.map((w) => w.pm25));
   const avgRad = Number((workers.reduce((a, b) => a + b.radiationUSv, 0) / (workers.length || 1)).toFixed(2));
   const opticalStripDetected = workers.some((w) => w.colorimetricH2SDetected);
 

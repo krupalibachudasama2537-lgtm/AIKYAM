@@ -71,7 +71,7 @@ export default function SubterraneanWorkerMap({
   const displayedWorkers = role === 'Worker'
     ? showAllWorkers
       ? allWorkers
-      : workers.filter((w) => w.id === MY_WORKER_ID)
+      : workers.filter((w) => w.id === 'W1026' || w.jacketId === 'SJ-003')
     : workers;
 
   const selectedWorker = displayedWorkers.find((w) => w.id === selectedPin) || null;

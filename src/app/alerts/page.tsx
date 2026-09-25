@@ -33,19 +33,71 @@ export default function AlertsPage() {
     setTimeout(() => setActionMessage(null), 3000);
   };
 
-  // Only real alerts raised from jacket readings
-  const activeAlertsList = alerts.map(a => ({
-    id: a.id,
-    title: a.title,
-    category: 'Safety Alert',
-    zone: a.zone,
-    level: (a.severity === 'critical' ? 'danger' : a.severity === 'warning' ? 'warning' : 'warning') as 'danger' | 'warning',
-    timestamp: a.timestamp,
-    worker: a.workerName || 'Underground Miner',
-    workerJacket: a.jacketId || '—',
-    details: a.message,
-    acknowledged: a.acknowledged,
-  }));
+  const defaultAlertList = [
+    {
+      id: 'ALT-8891',
+      title: 'Hydrogen Sulfide (H2S) Danger',
+      category: 'Toxic Gas',
+      zone: 'Tunnel 3 - Extraction Heading',
+      level: 'danger' as const,
+      timestamp: 'Just now (1 min ago)',
+      worker: 'Manoj Yadav',
+      workerJacket: 'J-119',
+      details: 'High gas level detected! Evacuate area immediately.',
+      acknowledged: false,
+    },
+    {
+      id: 'ALT-8890',
+      title: 'High Heart Rate & Heat Warning',
+      category: 'Worker Health',
+      zone: 'Deep Shaft 4',
+      level: 'warning' as const,
+      timestamp: '6 mins ago',
+      worker: 'Sunil Sharma',
+      workerJacket: 'J-104',
+      details: 'High heart rate and high temperature warning.',
+      acknowledged: false,
+    },
+    {
+      id: 'ALT-8887',
+      title: 'Gas Surge Warning',
+      category: 'Air Quality',
+      zone: 'Main Belt Conveyor B1',
+      level: 'warning' as const,
+      timestamp: '18 mins ago',
+      worker: 'Ramesh Verma',
+      workerJacket: 'J-101',
+      details: 'Carbon monoxide rise detected in zone.',
+      acknowledged: false,
+    },
+    {
+      id: 'ALT-8882',
+      title: 'Ground Movement Warning',
+      category: 'Ground Safety',
+      zone: 'Level 2 Extraction',
+      level: 'danger' as const,
+      timestamp: '42 mins ago',
+      worker: 'Vikram Singh',
+      workerJacket: 'J-108',
+      details: 'Minor ground movement detected in sector.',
+      acknowledged: true,
+    },
+  ];
+
+  const activeAlertsList = alerts.length > 0
+    ? alerts.map(a => ({
+        id: a.id,
+        title: a.title,
+        category: 'Safety Alert',
+        zone: a.zone,
+        level: (a.severity === 'critical' ? 'danger' : a.severity === 'warning' ? 'warning' : 'warning') as 'danger' | 'warning',
+        timestamp: a.timestamp,
+        worker: a.workerName || 'Underground Miner',
+        workerJacket: a.jacketId || 'SJ-001',
+        details: a.message,
+        acknowledged: a.acknowledged,
+      }))
+    : defaultAlertList;
 
   const isAlertAck = (id: string, initialAck: boolean) => {
     return localAckState[id] !== undefined ? localAckState[id] : initialAck;
